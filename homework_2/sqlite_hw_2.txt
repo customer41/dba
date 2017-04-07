@@ -1,0 +1,33 @@
+1. Создание таблицы для хранения товаров
+
+CREATE TABLE `products` (
+`id` INTEGER PRIMARY KEY AUTOINCREMENT,
+`title` TEXT,
+`article` TEXT NOT NULL,
+`img` TEXT,
+`price` INTEGER,
+`start_date` TEXT,
+`quantity` INTEGER
+);
+
+2. Наполнение данными
+
+INSERT INTO `products` 
+(`title`, `article`, `img`, `price`, `start_date`, `quantity`)
+VALUES 
+('Телевизор Sony KDL40W705C', '10008041', 'http://img.mvideo.ru/Pdb/small_pic/480/10008041b.jpg', 3599000, '2016-07-23', 64);
+
+INSERT INTO `products` 
+(`title`, `article`, `img`, `price`, `start_date`, `quantity`)
+VALUES 
+('Смартфон Samsung Galaxy S7 32GB DS SM-G930FD Black Onyx', '30024649', 'http://img.mvideo.ru/Pdb/small_pic/480/30024649b.jpg', 4299000, '2016-04-07', 53);
+
+INSERT INTO `products` 
+(`title`, `article`, `img`, `price`, `start_date`, `quantity`)
+VALUES 
+('Смартфон Apple iPhone 7 (PRODUCT)RED Special Edition 256Gb', '30027831', 'http://img.mvideo.ru/Pdb/small_pic/480/30027831b.jpg', 6399000, '2017-04-02', 20);
+
+INSERT INTO `products` 
+(`title`, `article`, `img`, `price`, `start_date`, `quantity`)
+VALUES 
+('Фотоаппарат компактный Nikon Coolpix L340', '10007620', 'http://img.mvideo.ru/Pdb/small_pic/480/10007620b.jpg', 1199000, '2016-11-10', 41);

@@ -1,0 +1,59 @@
+1. Создание таблиц
+
+CREATE TABLE "books" (
+"id" SERIAL PRIMARY KEY,
+"title" VARCHAR(100),
+"year" INT,
+"author" VARCHAR(100),
+"price" INT
+);
+
+CREATE TABLE "publishers" (
+"id" SERIAL PRIMARY KEY,
+"title" VARCHAR(100),
+"establishment_year" INT
+);
+
+2. Наполнение таблиц произвольными данными
+
+INSERT INTO "books" 
+("title", "year", "author", "price")
+VALUES 
+('Мастер и Маргарита', 1940, 'Михаил Булгаков', 18900);
+
+INSERT INTO "books" 
+("title", "year", "author", "price")
+VALUES 
+('Преступление и наказание', 1866, 'Фёдор Достоевский', 32500);
+
+INSERT INTO "books" 
+("title", "year", "author", "price")
+VALUES 
+('Зелёная миля', 1996, 'Стивен Кинг', 74300);
+
+INSERT INTO "books" 
+("title", "year", "author", "price")
+VALUES 
+('Лангольеры', 1990, 'Стивен Кинг', 65600);
+
+INSERT INTO "books" 
+("title", "year", "author", "price")
+VALUES 
+('Бойцовский клуб', 1996, 'Чак Паланик', 36400);
+
+INSERT INTO "publishers"
+("title", "establishment_year")
+VALUES 
+('Антология', 2016);
+
+INSERT INTO "publishers" 
+("title", "establishment_year")
+VALUES 
+('ACT', 1990);
+
+3. Запросы к таблицам
+
+3.1 SELECT * FROM "books" WHERE "author"='Михаил Булгаков';
+3.2 SELECT * FROM "books" WHERE "price"<=50000;
+3.3 SELECT "title", "year" FROM "books" WHERE "author"='Стивен Кинг' ORDER BY "year" ASC;
+3.4 SELECT DISTINCT "author" FROM "books" WHERE "year" BETWEEN 1990 AND 1999;

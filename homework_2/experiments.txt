@@ -1,0 +1,50 @@
+1. MySQL 5.7
+
+UPDATE `products` SET `price`=-1199000 WHERE `id`=4;
+ Ответ MySQL:
+#1264 - Out of range value for column 'price' at row 1
+
+UPDATE `products` SET `quantity`=-41 WHERE `id`=4;
+ Ответ MySQL:
+#1264 - Out of range value for column 'quantity' at row 1
+
+UPDATE `products` SET `article`='' WHERE `id`=4;
+Затронута 1 строка. (Запрос занял 0.0000 сек.)
+
+UPDATE `products` SET `article`=NULL WHERE `id`=4
+ Ответ MySQL:
+#1048 - Столбец 'article' не может принимать величину NULL
+
+2. Postgres 9.6
+
+UPDATE "products" SET "price"=-1199000 WHERE "id"=4;
+Query returned successfully: one row affected, 12 msec execution time.
+
+UPDATE "products" SET "quantity"=-41 WHERE "id"=4;
+Query returned successfully: one row affected, 11 msec execution time.
+
+UPDATE "products" SET "article"='' WHERE "id"=4;
+Query returned successfully: one row affected, 11 msec execution time.
+
+UPDATE "products" SET "article"=NULL WHERE "id"=4;
+ERROR:  null value in column "article" violates not-null constraint
+DETAIL:  Failing row contains (4, Фотоаппарат компактный Nikon Coolpix L340, null, http://img.mvideo.ru/Pdb/small_pic/480/10007620b.jpg, 1199000, 2016-11-10, 41).
+********** Ошибка **********
+SQL-состояние: 23502
+
+3. SQLite
+
+UPDATE `products` SET `price`=-1199000 WHERE `id`=4;
+Запрос успешно выполнен: UPDATE `products` SET `price`=-1199000 WHERE `id`=4; (заняло 0мс, 1 строк изменено)
+
+UPDATE `products` SET `quantity`=-41 WHERE `id`=4;
+Запрос успешно выполнен: UPDATE `products` SET `quantity`=-41 WHERE `id`=4; (заняло 0мс, 1 строк изменено)
+
+UPDATE `products` SET `article`='' WHERE `id`=4;
+Запрос успешно выполнен: UPDATE `products` SET `article`='' WHERE `id`=4; (заняло 0мс, 1 строк изменено)
+
+UPDATE `products` SET `article`=NULL WHERE `id`=4;
+NOT NULL constraint failed: products.article: UPDATE `products` SET `article`=NULL WHERE `id`=4;
+
+Резюме:
+В поля типа INT (цена, количество на складе) можно вставлять отрицательные значения. Исключение MySQL - там можно указать INT UNSIGNED, и в версии 5.7 получить ошибку (в предыдущих версиях: попытка вставить отрицательные значения - вставлялось 0). Для Postgres и SQLite необходимо использовать constraints (field > 0). В поле типа VARCHAR (артикул) можно вставлять пустые строки. Можно использовать constraints (field <> ''). NULL не вставляется, если есть ограничение NOT NULL.
