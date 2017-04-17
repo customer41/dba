@@ -1,0 +1,56 @@
+1. Создание таблицы с товарами интернет-магазина
+
+CREATE TABLE "goods" (
+"id" SERIAL,
+"article" VARCHAR(20) UNIQUE,
+"title" VARCHAR(255),
+"price" INTEGER,
+"old_price" INTEGER,
+"path_to_img" VARCHAR(1024),
+"start_date" DATE,
+"quantity" INTEGER,
+PRIMARY KEY ("id")
+);
+
+2. Заполнение таблицы товарами
+
+Смотри файл index.php
+
+3. Запросы к таблице
+
+3.1 SELECT * FROM "goods" ORDER BY "start_date" DESC LIMIT 10;
+3.2 SELECT * FROM "goods" ORDER BY "price" LIMIT 10;
+3.3 SELECT *, "old_price" - "price" AS discount FROM "goods"
+	WHERE "old_price" IS NOT NULL
+	ORDER BY "old_price" - "price" DESC LIMIT 10;
+3.4 SELECT * FROM "goods" WHERE "article" LIKE 'TEST%';
+
+4. Анализ исполнения запросов и индексы
+
+4.1 Total query runtime: 13 msec (запрос 3.1)
+	10 строк получено.
+	Создаём индекс: CREATE INDEX "start_date_idx" ON "goods" ("start_date" DESC);
+	Limit  (cost=0.29..1.17 rows=10 width=92)
+	Index Scan using start_date_idx on goods  (cost=0.29..886.25 rows=10000 width=92)
+	Total query runtime: 11 msec (запрос 3.1)
+	10 строк получено.
+4.2 Total query runtime: 13 msec (запрос 3.2)
+	10 строк получено.
+	Создаём индекс: CREATE INDEX "price_idx" ON "goods" ("price");
+	Limit  (cost=0.29..1.17 rows=10 width=92)
+	Index Scan using price_idx on goods  (cost=0.29..886.22 rows=10000 width=92)
+	Total query runtime: 11 msec (запрос 3.2)
+	10 строк получено.
+4.3 Total query runtime: 11 msec (запрос 3.3)
+	10 строк получено.
+	Создаём индекс: CREATE INDEX "old_price_idx" ON "goods" ("old_price");
+	Создаём индекс: CREATE INDEX "discount_idx" ON "goods" (("old_price" - "price") DESC);
+	Limit  (cost=0.29..1.64 rows=10 width=96)
+	Index Scan using discount_idx on goods  (cost=0.29..902.96 rows=6672 width=96)
+	Filter: (old_price IS NOT NULL)
+	Total query runtime: 2 msec (запрос 3.3)
+	10 строк получено.
+4.4 Total query runtime: 271 msec
+	3328 строк получено.
+	Seq Scan on goods  (cost=0.00..279.00 rows=3333 width=92)
+	Filter: ((article)::text ~~ 'TEST%'::text)

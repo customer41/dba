@@ -1,0 +1,44 @@
+1. Создание таблицы с товарами интернет-магазина
+
+CREATE TABLE `goods` (
+    `id` SERIAL,
+    `article` VARCHAR(20) UNIQUE,
+    `title` VARCHAR(255),
+    `price` INT UNSIGNED,
+    `old_price` INT UNSIGNED,
+    `path_to_img` VARCHAR(1024),
+    `start_date` DATE,
+    `quantity` INT UNSIGNED,
+    PRIMARY KEY (`id`)
+    );
+	
+2. Заполнение таблицы товарами
+
+Смотри файл index.php
+	
+3. Запросы к таблице
+
+3.1 SELECT * FROM `goods` ORDER BY `start_date` DESC LIMIT 10;
+3.2 SELECT * FROM `goods` ORDER BY `price` LIMIT 10;
+3.3 SELECT *, `old_price` - `price` AS discount FROM `goods`
+	WHERE `old_price` IS NOT NULL
+	ORDER BY `old_price` - `price` DESC LIMIT 10;
+3.4 SELECT * FROM `goods` WHERE `article` LIKE 'TEST%';
+
+4. Анализ исполнения запросов и индексы
+
+4.1 Запрос 3.1 занял 0.0040 сек.
+	Добавляем индекс: ALTER TABLE `goods` ADD INDEX `start_date_idx` (`start_date`);
+	Запрос 3.1 занял 0.0010 сек.
+	Использовался индекс `start_date_idx`, затронуто 10 строк
+4.2 Запрос 3.2 занял 0.0040 сек.
+	Добавляем индекс: ALTER TABLE `goods` ADD INDEX `price_idx` (`price`);
+	Запрос 3.2 занял 0.0010 сек.
+	Использовался индекс `price_idx`, затронуто 10 строк
+4.3 Запрос 3.3 занял 0.0040 сек.
+	Добавляем индекс: ALTER TABLE `goods` ADD INDEX `old_price_idx` (`price`);
+	Запрос 3.3 занял 0.0040 сек.
+	Индекс `old_price_idx` не использовался
+4.4 Запрос 3.4 занял 0.0010 сек.
+	Индекс `article_idx` не использовался
+	
