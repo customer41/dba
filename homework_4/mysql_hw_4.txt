@@ -1,0 +1,79 @@
+1. Продолжаем работу с таблицей "goods"
+
+2. Создание таблиц категорий товаров и брендов
+
+CREATE TABLE `categories` (
+    `id` SERIAL,
+    `name` VARCHAR(100),
+    PRIMARY KEY (`id`)
+    );
+	
+INSERT INTO `categories` (`name`) VALUES ('Еда');
+INSERT INTO `categories` (`name`) VALUES ('Посуда');
+INSERT INTO `categories` (`name`) VALUES ('Обувь');
+
+CREATE TABLE `brands` (
+    `id` SERIAL,
+    `name` VARCHAR(100),
+    PRIMARY KEY (`id`)
+    );
+	
+INSERT INTO `brands` (`name`) VALUES ('Doshirak');
+INSERT INTO `brands` (`name`) VALUES ('Alessi');
+INSERT INTO `brands` (`name`) VALUES ('Loake');
+INSERT INTO `brands` (`name`) VALUES ('Tefal');
+INSERT INTO `brands` (`name`) VALUES ('Rockport');
+
+3. Добавляем в таблицу товаров поля для связи с категориями и брендами
+
+ALTER TABLE `goods` ADD COLUMN (`categories_id` BIGINT UNSIGNED, `brands_id` BIGINT UNSIGNED);
+
+4. Создаём внешние ключи
+
+ALTER TABLE `goods`
+ADD FOREIGN KEY `cat` (`categories_id`)
+REFERENCES `categories` (`id`)
+ON UPDATE CASCADE
+ON DELETE RESTRICT;
+
+ALTER TABLE `goods`
+ADD FOREIGN KEY `brand` (`brands_id`)
+REFERENCES `brands` (`id`)
+ON UPDATE CASCADE
+ON DELETE RESTRICT;
+
+Протестировал работу внешних ключей. Вставлять в таблицу товаров в поле categories_id/brands_id можно только
+значения соответствующие полю id таблицы categories/brands. При обновлении поля id таблицы categories/brands автоматически обновляются поля categories_id/brands_id таблицы товаров. Невозможно удалить записи из таблицы categories/brands, пока в таблице товаров существуют записи с полями (categories_id/brands_id) в которых значения соответствуют значениям поля id таблицы categories/brands.
+
+5. Запросы
+5.1 
+
+SELECT `goods`.*, `categories`.`name`, `brands`.`name` FROM `goods`
+LEFT JOIN `categories`
+ON `categories`.`id`=`goods`.`categories_id`
+LEFT JOIN `brands`
+ON `brands`.`id`=`goods`.`brands_id`;
+
+5.2
+
+SELECT `goods`.* FROM `goods`
+INNER JOIN `brands`
+ON `brands`.`id`=`goods`.`brands_id`
+WHERE `brands`.`name` LIKE 'A%';
+
+5.3
+
+SELECT
+	*,
+    (
+        SELECT COUNT(*) FROM `goods`
+        WHERE `categories`.`id`=`goods`.`categories_id`
+    ) AS num_of_goods
+FROM `categories`;
+
+5.4
+
+SELECT DISTINCT `categories`.`name`, `brands`.`name` FROM `categories`
+LEFT JOIN `goods` ON `goods`.`categories_id`=`categories`.`id`
+LEFT JOIN `brands` ON `goods`.`brands_id`=`brands`.`id`
+ORDER BY `categories`.`name`;
