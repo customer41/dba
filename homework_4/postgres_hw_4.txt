@@ -1,6 +1,6 @@
-1. Продолжаем работу с таблицей "goods"
+1. РџСЂРѕРґРѕР»Р¶Р°РµРј СЂР°Р±РѕС‚Сѓ СЃ С‚Р°Р±Р»РёС†РµР№ "goods"
 
-2. Создание таблиц категорий товаров и брендов
+2. РЎРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС† РєР°С‚РµРіРѕСЂРёР№ С‚РѕРІР°СЂРѕРІ Рё Р±СЂРµРЅРґРѕРІ
 
 CREATE TABLE "categories" (
 "id" SERIAL,
@@ -8,9 +8,9 @@ CREATE TABLE "categories" (
 PRIMARY KEY ("id")
 );
 	
-INSERT INTO "categories" ("name") VALUES ('Еда');
-INSERT INTO "categories" ("name") VALUES ('Посуда');
-INSERT INTO "categories" ("name") VALUES ('Обувь');
+INSERT INTO "categories" ("name") VALUES ('Р•РґР°');
+INSERT INTO "categories" ("name") VALUES ('РџРѕСЃСѓРґР°');
+INSERT INTO "categories" ("name") VALUES ('РћР±СѓРІСЊ');
 
 CREATE TABLE "brands" (
 "id" SERIAL,
@@ -24,12 +24,12 @@ INSERT INTO "brands" ("name") VALUES ('Loake');
 INSERT INTO "brands" ("name") VALUES ('Tefal');
 INSERT INTO "brands" ("name") VALUES ('Rockport');
 
-3. Добавляем в таблицу товаров поля для связи с категориями и брендами
+3. Р”РѕР±Р°РІР»СЏРµРј РІ С‚Р°Р±Р»РёС†Сѓ С‚РѕРІР°СЂРѕРІ РїРѕР»СЏ РґР»СЏ СЃРІСЏР·Рё СЃ РєР°С‚РµРіРѕСЂРёСЏРјРё Рё Р±СЂРµРЅРґР°РјРё
 
 ALTER TABLE "goods" ADD COLUMN "categories_id" INTEGER;
 ALTER TABLE "goods" ADD COLUMN "brands_id" INTEGER;
 
-4. Создаём внешние ключи
+4. РЎРѕР·РґР°С‘Рј РІРЅРµС€РЅРёРµ РєР»СЋС‡Рё
 
 ALTER TABLE "goods"
 ADD FOREIGN KEY ("categories_id")
@@ -43,10 +43,10 @@ REFERENCES "brands" ("id")
 ON UPDATE CASCADE
 ON DELETE SET NULL;
 
-Протестировал работу внешних ключей. Вставлять в таблицу товаров в поле categories_id/brands_id можно только
-значения соответствующие полю id таблицы categories/brands. При обновлении поля id таблицы categories/brands автоматически обновляются поля categories_id/brands_id таблицы товаров. При удалении записи из таблицы categories/brands в таблице товаров в ячейках поля categories_id/brands_id устанавливаются значения NULL.
+РџСЂРѕС‚РµСЃС‚РёСЂРѕРІР°Р» СЂР°Р±РѕС‚Сѓ РІРЅРµС€РЅРёС… РєР»СЋС‡РµР№. Р’СЃС‚Р°РІР»СЏС‚СЊ РІ С‚Р°Р±Р»РёС†Сѓ С‚РѕРІР°СЂРѕРІ РІ РїРѕР»Рµ categories_id/brands_id РјРѕР¶РЅРѕ С‚РѕР»СЊРєРѕ
+Р·РЅР°С‡РµРЅРёСЏ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ РїРѕР»СЋ id С‚Р°Р±Р»РёС†С‹ categories/brands. РџСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РїРѕР»СЏ id С‚Р°Р±Р»РёС†С‹ categories/brands Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РѕР±РЅРѕРІР»СЏСЋС‚СЃСЏ РїРѕР»СЏ categories_id/brands_id С‚Р°Р±Р»РёС†С‹ С‚РѕРІР°СЂРѕРІ. РџСЂРё СѓРґР°Р»РµРЅРёРё Р·Р°РїРёСЃРё РёР· С‚Р°Р±Р»РёС†С‹ categories/brands РІ С‚Р°Р±Р»РёС†Рµ С‚РѕРІР°СЂРѕРІ РІ СЏС‡РµР№РєР°С… РїРѕР»СЏ categories_id/brands_id СѓСЃС‚Р°РЅР°РІР»РёРІР°СЋС‚СЃСЏ Р·РЅР°С‡РµРЅРёСЏ NULL.
 
-5. Запросы
+5. Р—Р°РїСЂРѕСЃС‹
 5.1 
 
 SELECT "goods".*, "categories"."name", "brands"."name" FROM "goods"
@@ -78,3 +78,4 @@ SELECT DISTINCT "categories"."name", "brands"."name" FROM "categories"
 LEFT JOIN "goods" ON "goods"."categories_id"="categories"."id"
 LEFT JOIN "brands" ON "goods"."brands_id"="brands"."id"
 ORDER BY "categories"."name";
+
