@@ -1,0 +1,67 @@
+1. Запросы
+1.1
+
+SELECT `categories`.*, AVG(`goods`.`price`) AS `avg_price`
+FROM `categories`
+INNER JOIN `goods` ON
+`categories`.`id`=`goods`.`categories_id`
+GROUP BY `categories`.`id`
+HAVING `avg_price`<100000;
+
+1.2
+
+SELECT `categories`.*, AVG(`goods`.`price`) AS `avg_price`
+FROM `categories`
+INNER JOIN `goods` ON
+`categories`.`id`=`goods`.`categories_id`
+WHERE `goods`.`quantity`>0
+GROUP BY `categories`.`id`
+HAVING `avg_price`<100000;
+
+1.3
+
+ALTER TABLE `brands` ADD COLUMN `class` CHAR(1);
+UPDATE `brands` SET `brands`.`class`='A' WHERE `brands`.`name`='Loake';
+UPDATE `brands` SET `brands`.`class`='B' WHERE `brands`.`name` IN ('Tefal', 'Alessi', 'Rockport');
+UPDATE `brands` SET `brands`.`class`='C' WHERE `brands`.`name`='Doshirak';
+
+SELECT `categories`.`name`, `brands`.`name`, `brands`.`class`, AVG(`goods`.`price`) AS `avg_price`
+FROM `categories`
+LEFT JOIN `goods` ON `categories`.`id`=`goods`.`categories_id`
+LEFT JOIN `brands` ON `brands`.`id`=`goods`.`brands_id`
+GROUP BY `brands`.`id`, `categories`.`id`;
+
+2. Добавляем таблицу заказов
+
+CREATE TABLE `orders` (
+    `id` SERIAL,
+    `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    `product_id` BIGINT UNSIGNED,
+    PRIMARY KEY (`id`)
+    );
+
+2.1 Запросы
+2.1.1
+
+SELECT
+	DATE_FORMAT(`orders`.`created`, '%Y-%m-%d') AS `date`,
+    COUNT(*) AS `num_of_orders`,
+    SUM(`goods`.`price`) AS `sum_of_orders`
+FROM `orders`
+INNER JOIN `goods` ON `orders`.`product_id`=`goods`.`id`
+GROUP BY `date`;
+
+2.1.2
+
+SELECT
+	DATE_FORMAT(`orders`.`created`, '%Y-%m-%d') AS `date`,
+    (CASE
+    	WHEN SUM(`goods`.`price`)<500000 THEN 'Сheap goods'
+        WHEN SUM(`goods`.`price`)>10000000 THEN 'Expensive goods'
+        ELSE 'Аverage price'
+    END) AS `group price`,
+    COUNT(*) AS `num_of_orders`,
+    SUM(`goods`.`price`) AS `sum_of_orders`
+FROM `orders`
+INNER JOIN `goods` ON `orders`.`product_id`=`goods`.`id`
+GROUP BY `date`;
