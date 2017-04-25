@@ -1,0 +1,80 @@
+1. Изучил тип данных ENUM
+
+2. Создание таблицы "История изменения товаров"
+
+CREATE TABLE `history_of_goods` (
+    `id` SERIAL,
+    `goods_id` BIGINT UNSIGNED NOT NULL,
+    `event` ENUM('create', 'price', 'delete') NOT NULL,
+    `old_price` INT UNSIGNED,
+    `new_price` INT UNSIGNED,
+    `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    PRIMARY KEY (`id`)
+    );
+	
+3. Триггеры
+3.1
+
+DELIMITER $$
+CREATE TRIGGER `create_of_goods`
+AFTER INSERT ON `goods`
+FOR EACH ROW
+BEGIN
+	INSERT INTO `history_of_goods` (`goods_id`, `event`) VALUES (NEW.`id`, 'create');
+END;
+$$
+DELIMITER ;
+
+3.2
+
+DELIMITER $$
+CREATE TRIGGER `change_of_price`
+AFTER UPDATE ON `goods`
+FOR EACH ROW
+BEGIN
+	INSERT INTO `history_of_goods`
+    (`goods_id`, `event`, `old_price`, `new_price`)
+    VALUES
+    (NEW.`id`, 'price', OLD.`price`, NEW.`price`); 
+END;
+$$
+DELIMITER ;
+
+3.3
+
+DELIMITER $$
+CREATE TRIGGER `delete_of_goods`
+AFTER DELETE ON `goods`
+FOR EACH ROW
+BEGIN
+	INSERT INTO `history_of_goods` (`goods_id`, `event`) VALUES (OLD.`id`, 'delete');
+END;
+$$
+DELIMITER ;
+
+4. Создание функции "размер скидки"
+
+DELIMITER $$
+CREATE FUNCTION size_of_discount(id BIGINT UNSIGNED)
+	RETURNS FLOAT
+    BEGIN
+    	DECLARE old INT UNSIGNED;
+        DECLARE new INT UNSIGNED;
+        DECLARE discount FLOAT;
+    	SELECT `old_price`, `new_price` INTO old, new FROM `history_of_goods` WHERE `goods_id`=id;
+        IF old IS NULL OR new IS NULL THEN
+        	RETURN 0;
+        END IF;
+        IF old > new THEN
+        	SET discount = 100 * (1 - new / old);
+        ELSE
+        	SET discount = 100 * (1 - old / new);
+        END IF;
+        RETURN discount;
+    END;
+$$
+DELIMITER ;
+
+4.1 Применение функции size_of_discount в запросе на выборку товаров
+
+SELECT *, size_of_discount(`id`) FROM `goods` WHERE `id` IN (20, 24, 30);
