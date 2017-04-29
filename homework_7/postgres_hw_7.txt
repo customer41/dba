@@ -1,0 +1,63 @@
+1. Установка ограничений на таблицу товаров
+
+1.1 На цены товаров
+
+ALTER TABLE "goods"
+ADD CHECK ("price" > 0);
+
+ALTER TABLE "goods"
+ADD CHECK ("old_price" > 0);
+
+ALTER TABLE "goods"
+ADD CONSTRAINT "discount"
+CHECK ("price" < "old_price");
+
+1.2 На артикулы
+
+ALTER TABLE "goods"
+ADD CONSTRAINT "article"
+UNIQUE ("article");
+
+ALTER TABLE "goods"
+ADD CHECK (char_length("article") <= 10);
+
+1.3 На поле "есть на складе"
+
+ALTER TABLE "goods"
+ADD CHECK ("quantity" >= 0);
+
+2. Другие ограничения (в других таблицах)
+
+ALTER TABLE "brands"
+ADD CHECK ("class" IN ('A', 'B', 'C'));
+
+ALTER TABLE "publishers"
+ADD CHECK (char_length("establishment_year"::text)=4);
+
+3. Изменяем тип колонки с int на bigint[]
+
+ALTER TABLE "goods"
+ALTER COLUMN "categories_id"
+SET DATA TYPE bigint[]
+USING ARRAY["categories_id"];
+
+3.1 Запросы
+3.1.1
+
+SELECT "goods".* FROM "goods"
+LEFT JOIN "categories" ON
+"categories"."id" = ANY("goods"."categories_id")
+WHERE "categories"."name" = 'Обувь';
+
+3.1.2
+
+SELECT "categories".*, COUNT(*) AS "num_of_products" FROM "categories"
+LEFT JOIN "goods" ON
+"categories"."id" = ANY ("goods"."categories_id")
+GROUP BY "categories"."name", "categories"."id";
+
+3.1.3
+
+UPDATE "goods"
+SET "categories_id"=array_append("categories_id", '2')
+WHERE "goods"."article"='0000000027';
