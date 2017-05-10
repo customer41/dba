@@ -1,9 +1,9 @@
-1. Добавляем поле типа jsonb в таблицу товаров
+1. Р”РѕР±Р°РІР»СЏРµРј РїРѕР»Рµ С‚РёРїР° jsonb РІ С‚Р°Р±Р»РёС†Сѓ С‚РѕРІР°СЂРѕРІ
 
 ALTER TABLE "goods"
 ADD COLUMN "features" jsonb;
 
-// Заполняем это поле различными характеристиками
+// Р—Р°РїРѕР»РЅСЏРµРј СЌС‚Рѕ РїРѕР»Рµ СЂР°Р·Р»РёС‡РЅС‹РјРё С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєР°РјРё
 
 UPDATE "goods"
 SET features='{"color": "black", "size": "XXL", "weight": 0.23}'::jsonb
@@ -11,7 +11,7 @@ WHERE "id"=1;
 
 ...
 
-2. Запросы
+2. Р—Р°РїСЂРѕСЃС‹
 
 2.1
 SELECT * FROM "goods"
@@ -25,14 +25,14 @@ WHERE ("features"->>'weight')::float < 1.0;
 SELECT * FROM "goods"
 WHERE "features"->>'color' = 'red' AND "features"->>'size' = 'XXL';
 
-3. Создаём материализованное представление
+3. РЎРѕР·РґР°С‘Рј РјР°С‚РµСЂРёР°Р»РёР·РѕРІР°РЅРЅРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ
 
 CREATE MATERIALIZED VIEW "features_of_goods"
 AS
 SELECT "record"."color", "record"."size", "record"."weight"
 FROM "goods", jsonb_to_record("features") AS "record"("color" text, "size" text, "weight" real);
 
-4*. Запрос
+4*. Р—Р°РїСЂРѕСЃ
 
 SELECT
 	*,
