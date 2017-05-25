@@ -1,0 +1,208 @@
+1. Создаём необходимые таблицы
+
+1.1 Создаём таблицу пользователей
+
+CREATE TABLE `users` (
+    `email` VARCHAR(30) UNIQUE,
+    `first_name` VARCHAR(20),
+    `last_name` VARCHAR(20),
+    `password` VARCHAR(100),
+    PRIMARY KEY (`email`)
+    );
+	
+1.2 Создаём таблицу категорий
+
+CREATE TABLE `categories` (
+    `id` SERIAL,
+    `title` VARCHAR(20),
+    PRIMARY KEY (`id`)
+    );
+	
+1.3 Создаём таблицу брэндов
+
+CREATE TABLE `brands` (
+    `id` SERIAL,
+    `title` VARCHAR(50),
+    `class` ENUM('A', 'B', 'C') NOT NULL,
+    PRIMARY KEY (`id`)
+    );
+	
+1.4 Создаём таблицу товаров
+
+CREATE TABLE `goods` (
+    `id` SERIAL,
+    `title` VARCHAR(255),
+    `article` VARCHAR(10) UNIQUE,
+    `price` INT UNSIGNED,
+    `old_price` INT UNSIGNED NULL,
+    `path_to_img` VARCHAR(500),
+    `start_date` DATE,
+    `quantity` INT UNSIGNED,
+    PRIMARY KEY (`id`)
+    );
+	
+1.4.1 Добавляем поля для связи с категориями и брэндами
+
+ALTER TABLE `goods`
+ADD `cat_id` BIGINT UNSIGNED NOT NULL,
+ADD `brand_id` BIGINT UNSIGNED NOT NULL;
+
+1.4.2 Добавляем внешние ключи на таблицу товаров
+
+ALTER TABLE `goods`
+ADD FOREIGN KEY `cat` (`cat_id`)
+REFERENCES `categories` (`id`)
+ON UPDATE CASCADE
+ON DELETE RESTRICT;
+
+ALTER TABLE `goods`
+ADD FOREIGN KEY `brand` (`brand_id`)
+REFERENCES `brands` (`id`)
+ON UPDATE CASCADE
+ON DELETE RESTRICT;
+
+1.5 Создаём таблицу заказов
+
+CREATE TABLE `orders` (
+    `id` SERIAL,
+    `user_pk` VARCHAR(30),
+	`created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    `product_art` VARCHAR(10),
+    `product_qty` INT UNSIGNED,
+    `summa` INT UNSIGNED NULL,
+    PRIMARY KEY (`id`)
+    );
+	
+1.5.1 Добавляем внешние ключи на таблицу заказов
+
+ALTER TABLE `orders`
+ADD FOREIGN KEY `pk` (`user_pk`)
+REFERENCES `users` (`email`)
+ON UPDATE CASCADE
+ON DELETE CASCADE;
+
+ALTER TABLE `orders`
+ADD FOREIGN KEY `art` (`product_art`)
+REFERENCES `goods` (`article`)
+ON UPDATE CASCADE
+ON DELETE CASCADE;
+
+1.5.2 Добавляем триггер для автоматического рассчёта суммы заказа в зависимости от количества товаров
+
+DELIMITER $$
+CREATE TRIGGER `set_summa`
+BEFORE INSERT ON `orders`
+FOR EACH ROW
+BEGIN
+	DECLARE cost INT UNSIGNED;
+    SELECT `price` INTO cost FROM `goods` WHERE `article`=NEW.`product_art`;
+	SET NEW.`summa`=NEW.`product_qty`*cost;
+END;
+$$
+DELIMITER ;
+
+2. Добавляем дополнительные функции
+
+2.1 Функция, возвращающая общую сумму заказов за определённый день
+
+DELIMITER $$
+CREATE FUNCTION sum_orders_day(day DATE)
+RETURNS INT
+BEGIN
+	DECLARE sum INT;
+    DECLARE date_f DATE;
+	SELECT DATE_FORMAT(`created`, '%Y-%m-%d') AS date, SUM(`summa`) INTO date_f, sum FROM `orders`
+    GROUP BY date HAVING date=day;
+	IF sum IS NULL THEN
+    	RETURN 0;
+    END IF;
+    RETURN sum;
+END;
+$$
+DELIMITER ;
+
+2.2 Функция, возвращающая количество товара на складе по его артикулу
+
+DELIMITER $$
+CREATE FUNCTION get_qty(art TEXT)
+RETURNS INT
+BEGIN
+	DECLARE qty INT;
+	SELECT `quantity` INTO qty FROM `goods` WHERE `article`=art;
+    RETURN qty;
+END;
+$$
+DELIMITER ;
+
+3. Управляем товарами на складе
+
+3.1 Добавляем триггер, запрещающий заказ в случае если товара на складе меньше чем заказано (или заказано 0)
+
+DELIMITER $$
+CREATE TRIGGER `check_qty`
+BEFORE INSERT ON `orders`
+FOR EACH ROW
+BEGIN
+	IF NEW.`product_qty` > get_qty(NEW.`product_art`) OR NEW.`product_qty`=0 THEN
+    	SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Attempt to order more than is in stock or 0';
+    END IF;
+END;
+$$
+DELIMITER ;
+
+3.2 Делаем автоматику: уменьшение или увеличение товара на складе в зависимости от добавления/удаления заказа
+
+3.2.2
+
+DELIMITER $$
+CREATE TRIGGER `create_order`
+AFTER INSERT ON `orders`
+FOR EACH ROW
+BEGIN
+    DECLARE qty_goods INT;
+    SELECT `quantity` INTO qty_goods FROM `goods` WHERE `article`=NEW.`product_art`;
+    UPDATE `goods` SET `quantity`=qty_goods-NEW.`product_qty` WHERE `article`=NEW.`product_art`;
+END;
+$$
+DELIMITER ;
+
+3.2.3
+
+DELIMITER $$
+CREATE TRIGGER `delete_order`
+BEFORE DELETE ON `orders`
+FOR EACH ROW
+BEGIN
+    DECLARE qty_goods INT;
+    SELECT `quantity` INTO qty_goods FROM `goods` WHERE `article`=OLD.`product_art`;
+    UPDATE `goods` SET `quantity`=OLD.`product_qty`+qty_goods WHERE `article`=OLD.`product_art`; 
+END;
+$$
+DELIMITER ;
+
+4. Несколько запросов на выборку данных
+
+4.1 Выбираем всех пользователей, все их заказы и общую сумму этих заказов (корзина)
+
+SELECT
+	`user_pk`,
+    GROUP_CONCAT(`product_art`) AS articles_of_goods,
+    SUM(`summa`) AS total
+FROM `orders`
+GROUP BY `user_pk`;
+
+4.2 Выбираем все классы брэндов и среднюю цену товаров в каждом из них
+
+SELECT
+    ROUND(AVG(`goods`.`price`)) AS `avg_price`,
+    `brands`.`class`
+FROM `goods`
+INNER JOIN `brands` ON `goods`.`brand_id`=`brands`.`id`
+GROUP BY `brands`.`class`;
+
+4.3 Выбираем все товары, отсортированные по дате появления в продаже, для чего создадим индекс по полю start_date
+
+CREATE INDEX `date` ON `goods` (`start_date` DESC);
+
+SELECT * FROM `goods` FORCE INDEX (`date`) ORDER BY `start_date` DESC;
